@@ -1,0 +1,31 @@
+{
+  "name": "remix-chat",
+  "private": true,
+  "description": "",
+  "license": "",
+  "sideEffects": false,
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix dev",
+    "postinstall": "remix setup node"
+  },
+  "dependencies": {
+    "@remix-run/react": "^1.3.4",
+    "@remix-run/vercel": "^1.3.4",
+    "@supabase/supabase-js": "^1.33.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "remix": "^1.3.4"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^1.2.3",
+    "@remix-run/eslint-config": "^1.3.4",
+    "@remix-run/serve": "^1.3.4",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
