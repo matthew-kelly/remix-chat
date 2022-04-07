@@ -55,13 +55,30 @@ export default () => {
   }, [channel]);
 
   return (
-    <div>
-      <pre>{JSON.stringify(messages, null, 2)}</pre>
-      <Form method="post">
-        <input type="text" name="content" placeholder="Type your message" />
+    <>
+      <h1 className="text-2xl uppercase mb-2">{channel.title}</h1>
+      <p className="text-gray-600 border-b border-gray-300 pb-4 mb-8">{channel.description}</p>
+      <div className="grow flex flex-col p-2 overflow-auto">
+        <div className="mt-auto">
+          {messages.map((message) => (
+            <p key={message.id} className="p-2">
+              {message.content}
+            </p>
+          ))}
+        </div>
+      </div>
+      <Form method="post" className="flex">
+        <input
+          type="text"
+          name="content"
+          placeholder="Type your message"
+          className="border border-gray-200 px-2 grow"
+        />
         <input type="hidden" value={channel.id} name="channelId" />
-        <button type="submit">Send</button>
+        <button type="submit" className="px-4 py-2 ml-4 bg-blue-200">
+          Send
+        </button>
       </Form>
-    </div>
+    </>
   );
 };

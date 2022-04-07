@@ -13,16 +13,20 @@ export const loader = async () => {
 export default () => {
   const { channels } = useLoaderData();
   return (
-    <div>
-      {channels.map((channel, index) => (
-        <p key={index}>
-          <Link to={`/channels/${channel.id}`}>{channel.title}</Link>
-        </p>
-      ))}
-      <p>
-        <Link to={`/channels/about`}>About</Link>
-      </p>
-      <Outlet />
+    <div className="h-screen flex">
+      <div className="bg-gray-800 w-40 p-4 text-white">
+        {channels.map((channel, index) => (
+          <p key={index} className="hover:text-gray-400">
+            <Link to={`/channels/${channel.id}`}>
+              <span className="text-gray-400 mr-1">#</span>
+              {channel.title}
+            </Link>
+          </p>
+        ))}
+      </div>
+      <div className="grow p-4 flex flex-col">
+        <Outlet />
+      </div>
     </div>
   );
 };
