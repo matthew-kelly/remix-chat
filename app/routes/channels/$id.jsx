@@ -1,18 +1,23 @@
-import { Form, useLoaderData, useFetcher } from 'remix';
+import { Form, useLoaderData, useFetcher, useTransition } from 'remix';
 import supabase from '~/utils/supabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import withAuthRequired from '~/utils/withAuthRequired';
 
-export const loader = async ({ params: { id } }) => {
+export const loader = async ({ request, params: { id } }) => {
+  const { supabase, redirect, user } = await withAuthRequired({ request });
+  if (redirect) return redirect;
   const { data: channel, error } = await supabase
     .from('channels')
-    .select('id, title, description, messages(id, content)')
+    .select('id, title, description, messages(id, content, likes, profiles(id, email, username))') // FIXME: update supabase to only allow viewing other users usernames
     .match({ id })
+    .order('created_at', { foreignTable: 'messages' })
     .single();
   if (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
   return {
     channel,
+    user,
   };
 };
 
@@ -20,17 +25,28 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const content = formData.get('content');
   const channelId = formData.get('channelId');
-  const { error } = await supabase.from('messages').insert({ content, channel_id: channelId });
+  const { supabase, user } = await withAuthRequired({ request });
+  const { error } = await supabase.from('messages').insert({ content, channel_id: channelId, user_id: user.id });
   if (error) {
-    console.log(error.message);
+    console.error(error.message);
   }
   return null;
 };
 
 export default () => {
-  const { channel } = useLoaderData();
+  const { channel, user } = useLoaderData();
   const fetcher = useFetcher();
   const [messages, setMessages] = useState([...channel.messages]);
+  const transition = useTransition();
+  const newMessageRef = useRef();
+  const messagesRef = useRef();
+
+  useEffect(() => {
+    if (transition.state !== 'submitting') {
+      // reset the text input
+      newMessageRef.current?.reset();
+    }
+  }, [transition.state]);
 
   useEffect(() => {
     supabase
@@ -39,7 +55,6 @@ export default () => {
         // something changed
         // call loader
         fetcher.load(`/channels/${channel.id}`);
-        // setMessages((current) => [...current, { id: payload.new.id, content: payload.new.content }]);
       })
       .subscribe();
   }, []);
@@ -54,20 +69,56 @@ export default () => {
     setMessages([...channel.messages]);
   }, [channel]);
 
+  useEffect(() => {
+    messagesRef.current?.scrollIntoView({
+      behaviour: 'smooth',
+      block: 'end',
+    });
+  }, [messages]);
+
+  const handleIncrement = async (message_id) => {
+    // call increment function from postgres
+    await supabase.rpc('increment_likes', { message_id });
+  };
+
   return (
     <>
       <h1 className="text-2xl uppercase mb-2">{channel.title}</h1>
       <p className="text-gray-600 border-b border-gray-300 pb-4 mb-8">{channel.description}</p>
       <div className="grow flex flex-col p-2 overflow-auto">
-        <div className="mt-auto">
-          {messages.map((message) => (
-            <p key={message.id} className="p-2">
-              {message.content}
-            </p>
-          ))}
+        <div className="mt-auto" ref={messagesRef}>
+          {messages.length > 0 ? (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex justify-between hover:bg-gray-50 py-2 ${
+                  message.profiles.id === user.id ? 'flex-col items-end text-right' : 'items-center'
+                }`}
+              >
+                <p>
+                  {message.content}
+                  <span className="block text-xs text-gray-400">
+                    {message.profiles.username ?? message.profiles.email}
+                  </span>
+                </p>
+                <div className="text-xs">
+                  <span className="text-gray-400">
+                    {message.likes} like{message.likes === 1 ? '' : 's'}
+                  </span>
+                  {message.profiles.id !== user.id && (
+                    <button type="button" onClick={() => handleIncrement(message.id)} className="ml-1">
+                      ❤️
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="font-bold text-center">Be the first to send a message!</p>
+          )}
         </div>
       </div>
-      <Form method="post" className="flex">
+      <Form method="post" className="flex" ref={newMessageRef}>
         <input
           type="text"
           name="content"
