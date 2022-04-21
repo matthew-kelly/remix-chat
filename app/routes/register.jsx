@@ -1,16 +1,23 @@
+import Filter from 'bad-words';
 import { useState } from 'react';
 import { Link } from 'remix';
 import supabase from '~/utils/supabase';
 
 export default () => {
   const [error, setError] = useState('');
+  const filter = new Filter({ placeholder: '*' });
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+
     const formData = new FormData(e.target);
     const email = formData.get('email');
     const password = formData.get('password');
     const username = formData.get('username');
+    if (filter.clean(username).includes('*')) {
+      setError('Profanity in usernames is not allowed');
+      return;
+    }
     const { data: profile, error } = await supabase.rpc('check_if_username_is_available', { username_var: username });
     if (profile || error) {
       setError('Username is already taken');

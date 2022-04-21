@@ -2,6 +2,7 @@ import { Form, useLoaderData, useFetcher, useTransition } from 'remix';
 import supabase from '~/utils/supabase';
 import { useEffect, useState, useRef } from 'react';
 import withAuthRequired from '~/utils/withAuthRequired';
+import Filter from 'bad-words';
 
 export const loader = async ({ request, params: { id } }) => {
   const { supabase, redirect, user } = await withAuthRequired({ request });
@@ -22,8 +23,9 @@ export const loader = async ({ request, params: { id } }) => {
 };
 
 export const action = async ({ request }) => {
+  const filter = new Filter({ placeholder: '*' });
   const formData = await request.formData();
-  const content = formData.get('content');
+  const content = filter.clean(formData.get('content'));
   if (content.trim() === '') return null;
   const channelId = formData.get('channelId');
   const { supabase, user } = await withAuthRequired({ request });
