@@ -24,6 +24,7 @@ export const loader = async ({ request, params: { id } }) => {
 export const action = async ({ request }) => {
   const formData = await request.formData();
   const content = formData.get('content');
+  if (content.trim() === '') return null;
   const channelId = formData.get('channelId');
   const { supabase, user } = await withAuthRequired({ request });
   const { error } = await supabase.from('messages').insert({ content, channel_id: channelId, user_id: user.id });
@@ -70,9 +71,13 @@ export default () => {
   }, [channel]);
 
   useEffect(() => {
-    messagesRef.current?.scrollIntoView({
-      behaviour: 'smooth',
-      block: 'end',
+    // messagesRef.current?.scrollIntoView({
+    //   behaviour: 'smooth',
+    //   block: 'end',
+    // });
+    messagesRef.current.scroll({
+      top: 1000000,
+      behavior: 'smooth',
     });
   }, [messages]);
 
@@ -84,41 +89,44 @@ export default () => {
   return (
     <>
       <h1 className="text-2xl uppercase mb-2">{channel.title}</h1>
-      <p className="text-gray-600 border-b border-gray-300 pb-4 mb-8">{channel.description}</p>
-      <div className="grow flex flex-col p-2 overflow-auto">
-        <div className="mt-auto" ref={messagesRef}>
-          {messages.length > 0 ? (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex justify-between hover:bg-gray-50 py-2 ${
-                  message.profiles.id === user.id ? 'flex-col items-end text-right' : 'items-center'
-                }`}
-              >
-                <p>
-                  {message.content}
+      <p className="text-gray-600 border-b border-gray-300 pb-4">{channel.description}</p>
+      <div className="grow flex flex-col p-2 overflow-y-auto scroll-smooth" ref={messagesRef}>
+        {messages.length > 0 ? (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex hover:bg-gray-50 py-2 ${
+                message.profiles.id === user.id ? 'flex-col items-end text-right' : 'items-center'
+              }`}
+            >
+              <p className="max-w-xs">
+                {message.content}
+                {message.profiles.id !== user.id && (
                   <span className="block text-xs text-gray-400">
                     {message.profiles.username ?? message.profiles.email}
                   </span>
-                </p>
-                <div className="text-xs">
+                )}
+              </p>
+              <div className="text-xs ml-4">
+                {message.likes > 0 && (
                   <span className="text-gray-400">
-                    {message.likes} like{message.likes === 1 ? '' : 's'}
+                    {message.likes}
+                    {message.profiles.id === user.id && ' likes'}
                   </span>
-                  {message.profiles.id !== user.id && (
-                    <button type="button" onClick={() => handleIncrement(message.id)} className="ml-1">
-                      ❤️
-                    </button>
-                  )}
-                </div>
+                )}
+                {message.profiles.id !== user.id && (
+                  <button type="button" onClick={() => handleIncrement(message.id)} className="ml-1">
+                    ❤️
+                  </button>
+                )}
               </div>
-            ))
-          ) : (
-            <p className="font-bold text-center">Be the first to send a message!</p>
-          )}
-        </div>
+            </div>
+          ))
+        ) : (
+          <p className="font-bold text-center">Be the first to send a message!</p>
+        )}
       </div>
-      <Form method="post" className="flex" ref={newMessageRef}>
+      <Form method="post" className="flex flex-shrink-0" ref={newMessageRef}>
         <input
           type="text"
           name="content"
