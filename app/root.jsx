@@ -5,7 +5,7 @@ import styles from '~/styles/app.css';
 
 export const meta = () => ({
   charset: 'utf-8',
-  title: 'New Remix App',
+  title: 'Animal Chat',
   viewport: 'width=device-width,initial-scale=1',
 });
 

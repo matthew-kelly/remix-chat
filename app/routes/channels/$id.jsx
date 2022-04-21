@@ -8,7 +8,7 @@ export const loader = async ({ request, params: { id } }) => {
   if (redirect) return redirect;
   const { data: channel, error } = await supabase
     .from('channels')
-    .select('id, title, description, messages(id, content, likes, profiles(id, email, username))') // FIXME: update supabase to only allow viewing other users usernames
+    .select('id, title, description, messages(id, content, likes, profiles(id, username))')
     .match({ id })
     .order('created_at', { foreignTable: 'messages' })
     .single();
@@ -71,10 +71,6 @@ export default () => {
   }, [channel]);
 
   useEffect(() => {
-    // messagesRef.current?.scrollIntoView({
-    //   behaviour: 'smooth',
-    //   block: 'end',
-    // });
     messagesRef.current.scroll({
       top: 1000000,
       behavior: 'smooth',
@@ -102,9 +98,7 @@ export default () => {
               <p className="max-w-xs">
                 {message.content}
                 {message.profiles.id !== user.id && (
-                  <span className="block text-xs text-gray-400">
-                    {message.profiles.username ?? message.profiles.email}
-                  </span>
+                  <span className="block text-xs text-gray-400">{message.profiles.username}</span>
                 )}
               </p>
               <div className="text-xs ml-4">

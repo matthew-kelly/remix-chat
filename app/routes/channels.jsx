@@ -39,7 +39,9 @@ export default () => {
       </div>
       <div className="grow overflow-y-auto p-4 flex flex-col h-full sm:h-auto">
         {location.pathname === '/channels' || location.pathname === '/channels/' ? (
-          <div className="grow flex items-center justify-center text-center text-2xl">👈 Choose a channel!</div>
+          <div className="grow flex items-center justify-center text-center text-2xl">
+            <span className="rotate-90 mr-2 sm:rotate-0">👈</span> Choose a channel!
+          </div>
         ) : null}
         <Outlet />
       </div>
